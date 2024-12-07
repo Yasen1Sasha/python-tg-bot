@@ -1,62 +1,74 @@
 import telebot
 from telebot import types
+import os
 
-token = '7709944368:AAE17SNQaZnxRmLyhwhgP7iWcVwj8-9Tb7o'
-
+token = "7709944368:AAE17SNQaZnxRmLyhwhgP7iWcVwj8-9Tb7o"
 bot = telebot.TeleBot(token)
 
-
-@bot.message_handler(commands=['start'])
-def command_start(message):
-    bot.send_message(message.chat.id, 'Komanda start')
+list_sticker = ['CAACAgIAAxkBAAO3Z0iqLLOSpaCz8_EVHM7uWxrxLD4AAgUAA8A2TxP5al-agmtNdTYE']
 
 
-#@bot.message_handler(commands=['stop'])
-def command_stop(message):
-    bot.send_message(message.chat.id, 'Komanda stop')
+# --- commands ----------------------------------------------------------------
+@bot.message_handler(commands=['statr'])
+def bot_start(message):
+    bot.send_message(message.chat.id, ' Start!')
 
 
-@bot.message_handler(commands=['open', 'close'])
-def bot_comands(message):
-     mes = ''
+@bot.message_handler(commands=['stop'])
+def bot_stop(message):
+    bot.send_message(message.chat.id, 'Stop!')
 
-     if message.text =='/open':
-         mes = 'Open'
-     elif message.text == '/close':
-         mes = 'Close'
-
-
-     bot.send_message(message.chat.id, mes)
 
 @bot.message_handler(commands=['key'])
-def key_go(message):
+def key_function(message):
     keyboard = types.ReplyKeyboardMarkup(one_time_keyboard=True)
-    button_1 = types.KeyboardButton(text='/start')
-    button_2 = types.KeyboardButton(text='/stop')
-    button_3 = types.KeyboardButton(text='/close')
-    button_4 = types.KeyboardButton(text='/open')
+    button_1 = types.KeyboardButton(text='button 1')
+    button_2 = types.KeyboardButton(text='button 2')
+    keyboard.add(button_1, button_2)
 
-    keyboard.add(button_1, button_2, button_3, button_4)
-
-    bot.send_message(message.chat.id, 'Keyboard', reply_markup=keyboard)
-
-@bot.message_handler(func=lambda message: message.text =='knopka1')
-def handle_button_1(message):
-    bot.send_message(message.chat.id, 'Ви натиснули кнопку 1.')
+    msg = bot.send_message(message.chat.id, message.text + 'Key!', reply_markup=keyboard)
+    bot.register_next_step_handler(msg, bot_button_function)
 
 
-@bot.message_handler(commands=['sticker'])
+@bot.message_handler(content_types=['sticker'])
 def handle_sticker(message):
+    # print(message.sticker)
+    # Отримуємо інформацію про стікер
     sticker_id = message.sticker.file_id
     emoji = message.sticker.emoji
-
-    bot.reply_to(message, f"Ви надіслали стікер з емоджі{emoji} (ID:{sticker_id})" )
-
+    bot.reply_to(message, f"Ви надіслали стікер з емоджі {emoji} (ID: {sticker_id})")
 
 
+@bot.message_handler(commands=['send_sticker'])
+def my_send_sticker(message):
+    bot.send_sticker(message.chat.id, list_sticker[0])
 
 
-def bot_button_if(message):
-    pass
+# --- content_types = text ----------------------------------------------------
+@bot.message_handler(content_types=['text'])
+def bot_message_text(message):
+    if message.text == 'dog':
+        current_file_path = os.path.abspath(__file__)
+        current_directory = os.path.dirname(current_file_path)
+        my_file_directory = os.path.join(current_directory, 'sticker', 'dog.webm')
 
-bot.polling()
+        with open(my_file_directory, "rb") as sticker:
+            bot.send_sticker(message.chat.id, sticker)
+
+    else:
+        # print(message)
+        bot.send_message(message.chat.id, message.text + '... Text work!')
+
+
+# --- functions ---------------------------------------------------------------
+def bot_button_function(message):
+    if message.text == 'button 1':
+        bot.send_message(message.chat.id, '1')
+    elif message.text == 'button 2':
+        bot.send_message(message.chat.id, '2')
+    else:
+        bot.send_message(message.chat.id, 'none')
+
+
+if __name__ == '__main__':
+    bot.infinity_polling()
